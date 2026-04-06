@@ -25,7 +25,7 @@ export class AuditLogger {
   }
 }
 
-const AUDIT_SKIP = new Set(['get-action-report', 'clear-action-report']);
+const AUDIT_SKIP = new Set(['audit']);
 
 export function createAuditedServer(
   server: McpServer,

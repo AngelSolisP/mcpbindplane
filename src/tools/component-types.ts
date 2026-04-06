@@ -3,39 +3,62 @@ import * as z from 'zod/v4';
 import { BindPlaneClient } from '../client.js';
 
 export function registerComponentTypeTools(server: McpServer, client: BindPlaneClient) {
-  const typeEndpoints = [
-    { prefix: 'source-type', path: '/v1/source-types', singular: '/v1/source-types', label: 'source type' },
-    { prefix: 'destination-type', path: '/v1/destination-types', singular: '/v1/destination-types', label: 'destination type' },
-    { prefix: 'processor-type', path: '/v1/processor-types', singular: '/v1/processor-types', label: 'processor type' },
-    { prefix: 'extension-type', path: '/v1/extension-types', singular: '/v1/extension-types', label: 'extension type' },
-    { prefix: 'recommendation-type', path: '/v1/recommendation-types', singular: '/v1/recommendation-types', label: 'recommendation type' },
-  ];
+  server.registerTool(
+    'component-types',
+    {
+      description: `Browse available BindPlane component type definitions (source types, destination types, processor types, extension types, recommendation types).
 
-  for (const { prefix, path, singular, label } of typeEndpoints) {
-    server.registerTool(
-      `list-${prefix}s`,
-      {
-        description: `List all available ${label}s (component definitions)`,
-        inputSchema: z.object({}),
-      },
-      async () => {
-        const result = await client.get(path);
-        return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-      }
-    );
+Actions:
+• list-source-types — List all available source types (e.g. syslog, windowsevents, macOS). No params
+• get-source-type — Get details/parameters of a source type. Params: name (e.g. "macOS", "syslog")
+• list-destination-types — List all destination types (e.g. chronicle, datadog). No params
+• get-destination-type — Get details of a destination type. Params: name
+• list-processor-types — List all processor types. No params
+• get-processor-type — Get details of a processor type. Params: name
+• list-extension-types — List all extension types. No params
+• get-extension-type — Get details of an extension type. Params: name
+• list-recommendation-types — List all recommendation types. No params
+• get-recommendation-type — Get details of a recommendation type. Params: name`,
+      inputSchema: z.object({
+        action: z.enum([
+          'list-source-types', 'get-source-type',
+          'list-destination-types', 'get-destination-type',
+          'list-processor-types', 'get-processor-type',
+          'list-extension-types', 'get-extension-type',
+          'list-recommendation-types', 'get-recommendation-type',
+        ]).describe('Action to perform'),
+        name: z.string().optional().describe('Component type name (for get-* actions)'),
+      }),
+    },
+    async ({ action, name }) => {
+      const json = (data: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] });
+      const enc = encodeURIComponent;
 
-    server.registerTool(
-      `get-${prefix}`,
-      {
-        description: `Get details of a specific ${label} by name`,
-        inputSchema: z.object({
-          name: z.string().describe(`${label} name`),
-        }),
-      },
-      async ({ name }) => {
-        const result = await client.get(`${singular}/${encodeURIComponent(name)}`);
-        return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      const routes: Record<string, string> = {
+        'list-source-types': '/v1/source-types',
+        'list-destination-types': '/v1/destination-types',
+        'list-processor-types': '/v1/processor-types',
+        'list-extension-types': '/v1/extension-types',
+        'list-recommendation-types': '/v1/recommendation-types',
+      };
+
+      if (routes[action]) {
+        return json(await client.get(routes[action]));
       }
-    );
-  }
+
+      const getRoutes: Record<string, string> = {
+        'get-source-type': '/v1/source-types',
+        'get-destination-type': '/v1/destination-types',
+        'get-processor-type': '/v1/processor-types',
+        'get-extension-type': '/v1/extension-types',
+        'get-recommendation-type': '/v1/recommendation-types',
+      };
+
+      if (getRoutes[action]) {
+        return json(await client.get(`${getRoutes[action]}/${enc(name!)}`));
+      }
+
+      throw new Error(`Unknown action: ${action}`);
+    }
+  );
 }

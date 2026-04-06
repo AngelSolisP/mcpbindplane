@@ -4,78 +4,43 @@ import { BindPlaneClient } from '../client.js';
 
 export function registerResourceTools(server: McpServer, client: BindPlaneClient) {
   server.registerTool(
-    'apply-resources',
+    'resources',
     {
-      description: 'Create or update BindPlane resources (like kubectl apply). Accepts a resource definition with apiVersion, kind, metadata, and spec. Use apiVersion "bindplane.observiq.com/v1". Supported kinds: Configuration, Source, Destination, Processor, Extension, Fleet, etc.',
-      inputSchema: z.object({
-        resources: z.array(z.record(z.string(), z.unknown())).describe(
-          'Array of resource objects. Each must have apiVersion, kind, metadata.name, and spec.'
-        ),
-      }),
-    },
-    async ({ resources }) => {
-      const result = await client.post('/v1/apply', { resources });
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
+      description: `Manage BindPlane resources generically (like kubectl apply/delete). Works with any resource kind: Configuration, Source, Destination, Processor, Extension, Fleet, etc.
 
-  server.registerTool(
-    'delete-resources',
-    {
-      description: 'Delete BindPlane resources by providing resource definitions',
+Actions:
+• apply — Create or update resources. Params: resources (array of resource objects with apiVersion, kind, metadata.name, spec). Use apiVersion "bindplane.observiq.com/v1" or "bindplane.observiq.com/v2"
+• delete — Delete resources by definition. Params: resources (array with apiVersion, kind, metadata.name)
+• list-by-kind — List all resources of a specific kind. Params: kind (e.g. "Configuration", "Source", "Destination")
+• get — Get one resource by kind and name. Params: kind, name
+• get-history — Get the change history of a resource. Params: kind, name`,
       inputSchema: z.object({
-        resources: z.array(z.record(z.string(), z.unknown())).describe(
-          'Array of resource objects to delete. Each must have apiVersion, kind, and metadata.name.'
-        ),
+        action: z.enum([
+          'apply', 'delete', 'list-by-kind', 'get', 'get-history',
+        ]).describe('Action to perform'),
+        resources: z.array(z.record(z.string(), z.unknown())).optional().describe('Array of resource objects (for apply/delete). Each needs apiVersion, kind, metadata.name, and spec for apply'),
+        kind: z.string().optional().describe('Resource kind (for list-by-kind, get, get-history). E.g. "Configuration", "Source", "Destination"'),
+        name: z.string().optional().describe('Resource name (for get, get-history)'),
       }),
     },
-    async ({ resources }) => {
-      const result = await client.post('/v1/delete', { resources });
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
+    async ({ action, resources, kind, name }) => {
+      const json = (data: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] });
+      const enc = encodeURIComponent;
 
-  server.registerTool(
-    'list-resources-by-kind',
-    {
-      description: 'List all resources of a specific kind (e.g., Configuration, Source, Destination)',
-      inputSchema: z.object({
-        kind: z.string().describe('Resource kind (e.g., Configuration, Source, Destination, Processor, Extension)'),
-      }),
-    },
-    async ({ kind }) => {
-      const result = await client.get(`/v1/resources/${encodeURIComponent(kind)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-resource',
-    {
-      description: 'Get a specific resource by kind and name',
-      inputSchema: z.object({
-        kind: z.string().describe('Resource kind'),
-        name: z.string().describe('Resource name'),
-      }),
-    },
-    async ({ kind, name }) => {
-      const result = await client.get(`/v1/resources/${encodeURIComponent(kind)}/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-resource-history',
-    {
-      description: 'Get the change history of a resource',
-      inputSchema: z.object({
-        kind: z.string().describe('Resource kind'),
-        name: z.string().describe('Resource name'),
-      }),
-    },
-    async ({ kind, name }) => {
-      const result = await client.get(`/v1/${encodeURIComponent(kind)}/${encodeURIComponent(name)}/history`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      switch (action) {
+        case 'apply':
+          return json(await client.post('/v1/apply', { resources }));
+        case 'delete':
+          return json(await client.post('/v1/delete', { resources }));
+        case 'list-by-kind':
+          return json(await client.get(`/v1/resources/${enc(kind!)}`));
+        case 'get':
+          return json(await client.get(`/v1/resources/${enc(kind!)}/${enc(name!)}`));
+        case 'get-history':
+          return json(await client.get(`/v1/${enc(kind!)}/${enc(name!)}/history`));
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
     }
   );
 }

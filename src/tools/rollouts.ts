@@ -4,112 +4,51 @@ import { BindPlaneClient } from '../client.js';
 
 export function registerRolloutTools(server: McpServer, client: BindPlaneClient) {
   server.registerTool(
-    'list-rollouts',
+    'rollouts',
     {
-      description: 'List all rollouts',
-      inputSchema: z.object({}),
-    },
-    async () => {
-      const result = await client.get('/v1/rollouts');
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
+      description: `Manage BindPlane rollouts — incremental configuration deployments to agents.
 
-  server.registerTool(
-    'create-rollout',
-    {
-      description: 'Create a new rollout for a configuration',
+Actions:
+• list — List all rollouts. No params
+• create — Create a new rollout for a configuration. Params: name (configuration name)
+• get — Get rollout details. Params: name
+• get-status — Get rollout progress (agents updated, errors, etc). Params: name
+• start — Start deploying a rollout. Deploys incrementally: 3 agents first, then 5x batches every 5s up to 100. Params: name
+• update — Update a rollout. Params: name
+• pause — Pause an in-progress rollout. Params: name
+• resume — Resume a paused rollout. Params: name`,
       inputSchema: z.object({
-        name: z.string().describe('Configuration name to create rollout for'),
+        action: z.enum([
+          'list', 'create', 'get', 'get-status',
+          'start', 'update', 'pause', 'resume',
+        ]).describe('Action to perform'),
+        name: z.string().optional().describe('Configuration or rollout name'),
       }),
     },
-    async ({ name }) => {
-      const result = await client.post('/v1/rollouts', { name });
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
+    async ({ action, name }) => {
+      const json = (data: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] });
+      const enc = encodeURIComponent;
 
-  server.registerTool(
-    'get-rollout',
-    {
-      description: 'Get details of a specific rollout',
-      inputSchema: z.object({
-        name: z.string().describe('Rollout name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.get(`/v1/rollouts/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-rollout-status',
-    {
-      description: 'Get the status of a rollout (how many agents updated, errors, etc.)',
-      inputSchema: z.object({
-        name: z.string().describe('Rollout name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.get(`/v1/rollouts/${encodeURIComponent(name)}/status`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'start-rollout',
-    {
-      description: 'Start deploying a rollout to agents. Rolls out incrementally: 3 agents first, then batches of 5x more every 5 seconds, up to 100.',
-      inputSchema: z.object({
-        name: z.string().describe('Rollout name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.post(`/v1/rollouts/${encodeURIComponent(name)}/start`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'update-rollout',
-    {
-      description: 'Update a rollout',
-      inputSchema: z.object({
-        name: z.string().describe('Rollout name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.post(`/v1/rollouts/${encodeURIComponent(name)}/update`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'pause-rollout',
-    {
-      description: 'Pause an in-progress rollout',
-      inputSchema: z.object({
-        name: z.string().describe('Rollout name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.put(`/v1/rollouts/${encodeURIComponent(name)}/pause`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'resume-rollout',
-    {
-      description: 'Resume a paused rollout',
-      inputSchema: z.object({
-        name: z.string().describe('Rollout name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.put(`/v1/rollouts/${encodeURIComponent(name)}/resume`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      switch (action) {
+        case 'list':
+          return json(await client.get('/v1/rollouts'));
+        case 'create':
+          return json(await client.post('/v1/rollouts', { name }));
+        case 'get':
+          return json(await client.get(`/v1/rollouts/${enc(name!)}`));
+        case 'get-status':
+          return json(await client.get(`/v1/rollouts/${enc(name!)}/status`));
+        case 'start':
+          return json(await client.post(`/v1/rollouts/${enc(name!)}/start`));
+        case 'update':
+          return json(await client.post(`/v1/rollouts/${enc(name!)}/update`));
+        case 'pause':
+          return json(await client.put(`/v1/rollouts/${enc(name!)}/pause`));
+        case 'resume':
+          return json(await client.put(`/v1/rollouts/${enc(name!)}/resume`));
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
     }
   );
 }

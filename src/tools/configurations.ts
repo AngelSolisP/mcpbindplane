@@ -3,241 +3,91 @@ import * as z from 'zod/v4';
 import { BindPlaneClient } from '../client.js';
 
 export function registerConfigurationTools(server: McpServer, client: BindPlaneClient) {
-  // --- Configurations ---
-
   server.registerTool(
-    'list-configurations',
+    'configurations',
     {
-      description: 'List all configurations',
-      inputSchema: z.object({}),
-    },
-    async () => {
-      const result = await client.get('/v1/configurations');
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
+      description: `Manage BindPlane configurations, sources, destinations, processors, and extensions.
 
-  server.registerTool(
-    'get-configuration',
-    {
-      description: 'Get a configuration by name',
+Actions — Configurations:
+• list-configurations — List all configurations. No params
+• get-configuration — Get a configuration by name. Params: name
+• copy-configuration — Duplicate a configuration. Params: name (source config to copy)
+• revert-configuration — Revert to last deployed version. Params: name
+• delete-configuration — Delete a configuration. Params: name
+
+Actions — Sources:
+• list-sources — List all source instances. No params
+• get-source — Get a source by name. Params: name
+• delete-source — Delete a source. Params: name
+
+Actions — Destinations:
+• list-destinations — List all destination instances. No params
+• get-destination — Get a destination by name. Params: name
+• delete-destination — Delete a destination. Params: name
+
+Actions — Processors:
+• list-processors — List all processor instances. No params
+• get-processor — Get a processor by name. Params: name
+• delete-processor — Delete a processor. Params: name
+
+Actions — Extensions:
+• list-extensions — List all extension instances. No params
+• get-extension — Get an extension by name. Params: name
+• delete-extension — Delete an extension. Params: name`,
       inputSchema: z.object({
-        name: z.string().describe('Configuration name'),
+        action: z.enum([
+          'list-configurations', 'get-configuration', 'copy-configuration',
+          'revert-configuration', 'delete-configuration',
+          'list-sources', 'get-source', 'delete-source',
+          'list-destinations', 'get-destination', 'delete-destination',
+          'list-processors', 'get-processor', 'delete-processor',
+          'list-extensions', 'get-extension', 'delete-extension',
+        ]).describe('Action to perform'),
+        name: z.string().optional().describe('Resource name (configuration, source, destination, processor, or extension)'),
       }),
     },
-    async ({ name }) => {
-      const result = await client.get(`/v1/configurations/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
+    async ({ action, name }) => {
+      const json = (data: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] });
+      const enc = encodeURIComponent;
 
-  server.registerTool(
-    'copy-configuration',
-    {
-      description: 'Make a copy of a configuration',
-      inputSchema: z.object({
-        name: z.string().describe('Source configuration name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.post(`/v1/configurations/${encodeURIComponent(name)}/copy`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'revert-configuration',
-    {
-      description: 'Revert a configuration to its last deployed version',
-      inputSchema: z.object({
-        name: z.string().describe('Configuration name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.put(`/v1/configurations/${encodeURIComponent(name)}/revert`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'delete-configuration',
-    {
-      description: 'Delete a configuration',
-      inputSchema: z.object({
-        name: z.string().describe('Configuration name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.delete(`/v1/configurations/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  // --- Sources ---
-
-  server.registerTool(
-    'list-sources',
-    {
-      description: 'List all source instances',
-      inputSchema: z.object({}),
-    },
-    async () => {
-      const result = await client.get('/v1/sources');
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-source',
-    {
-      description: 'Get a source instance by name',
-      inputSchema: z.object({
-        name: z.string().describe('Source name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.get(`/v1/sources/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'delete-source',
-    {
-      description: 'Delete a source instance',
-      inputSchema: z.object({
-        name: z.string().describe('Source name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.delete(`/v1/sources/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  // --- Destinations ---
-
-  server.registerTool(
-    'list-destinations',
-    {
-      description: 'List all destination instances',
-      inputSchema: z.object({}),
-    },
-    async () => {
-      const result = await client.get('/v1/destinations');
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-destination',
-    {
-      description: 'Get a destination instance by name',
-      inputSchema: z.object({
-        name: z.string().describe('Destination name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.get(`/v1/destinations/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'delete-destination',
-    {
-      description: 'Delete a destination instance',
-      inputSchema: z.object({
-        name: z.string().describe('Destination name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.delete(`/v1/destinations/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  // --- Processors ---
-
-  server.registerTool(
-    'list-processors',
-    {
-      description: 'List all processor instances',
-      inputSchema: z.object({}),
-    },
-    async () => {
-      const result = await client.get('/v1/processors');
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-processor',
-    {
-      description: 'Get a processor instance by name',
-      inputSchema: z.object({
-        name: z.string().describe('Processor name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.get(`/v1/processors/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'delete-processor',
-    {
-      description: 'Delete a processor instance',
-      inputSchema: z.object({
-        name: z.string().describe('Processor name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.delete(`/v1/processors/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  // --- Extensions ---
-
-  server.registerTool(
-    'list-extensions',
-    {
-      description: 'List all extension instances',
-      inputSchema: z.object({}),
-    },
-    async () => {
-      const result = await client.get('/v1/extensions');
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'get-extension',
-    {
-      description: 'Get an extension instance by name',
-      inputSchema: z.object({
-        name: z.string().describe('Extension name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.get(`/v1/extensions/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
-    }
-  );
-
-  server.registerTool(
-    'delete-extension',
-    {
-      description: 'Delete an extension instance',
-      inputSchema: z.object({
-        name: z.string().describe('Extension name'),
-      }),
-    },
-    async ({ name }) => {
-      const result = await client.delete(`/v1/extensions/${encodeURIComponent(name)}`);
-      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      switch (action) {
+        case 'list-configurations':
+          return json(await client.get('/v1/configurations'));
+        case 'get-configuration':
+          return json(await client.get(`/v1/configurations/${enc(name!)}`));
+        case 'copy-configuration':
+          return json(await client.post(`/v1/configurations/${enc(name!)}/copy`));
+        case 'revert-configuration':
+          return json(await client.put(`/v1/configurations/${enc(name!)}/revert`));
+        case 'delete-configuration':
+          return json(await client.delete(`/v1/configurations/${enc(name!)}`));
+        case 'list-sources':
+          return json(await client.get('/v1/sources'));
+        case 'get-source':
+          return json(await client.get(`/v1/sources/${enc(name!)}`));
+        case 'delete-source':
+          return json(await client.delete(`/v1/sources/${enc(name!)}`));
+        case 'list-destinations':
+          return json(await client.get('/v1/destinations'));
+        case 'get-destination':
+          return json(await client.get(`/v1/destinations/${enc(name!)}`));
+        case 'delete-destination':
+          return json(await client.delete(`/v1/destinations/${enc(name!)}`));
+        case 'list-processors':
+          return json(await client.get('/v1/processors'));
+        case 'get-processor':
+          return json(await client.get(`/v1/processors/${enc(name!)}`));
+        case 'delete-processor':
+          return json(await client.delete(`/v1/processors/${enc(name!)}`));
+        case 'list-extensions':
+          return json(await client.get('/v1/extensions'));
+        case 'get-extension':
+          return json(await client.get(`/v1/extensions/${enc(name!)}`));
+        case 'delete-extension':
+          return json(await client.delete(`/v1/extensions/${enc(name!)}`));
+        default:
+          throw new Error(`Unknown action: ${action}`);
+      }
     }
   );
 }

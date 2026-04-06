@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-MCP server for BindPlane observability pipeline management. Exposes the full BindPlane REST API (~67 tools) to AI assistants via the Model Context Protocol. Written in TypeScript, distributed as an npm package (`mcp-bindplane`).
+MCP server for BindPlane observability pipeline management. Exposes the full BindPlane REST API (9 consolidated tools, 84 actions) to AI assistants via the Model Context Protocol. Written in TypeScript, distributed as an npm package (`mcp-bindplane`).
 
 ## Commands
 
@@ -40,9 +40,9 @@ src/
     └── audit.ts          # 2 tools: get-action-report, clear-action-report
 ```
 
-**Key pattern:** Every tool module exports a `registerXxxTools(server: McpServer, client: BindPlaneClient)` function. Tools use `server.registerTool(name, { description, inputSchema: z.object({...}) }, handler)`. Handlers call `client.get/post/put/patch/delete` and return `{ content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }`.
+**Key pattern:** Every tool module exports a `registerXxxTools(server: McpServer, client: BindPlaneClient)` function that registers ONE consolidated tool with an `action` enum parameter. Each handler uses a switch statement to route actions to the correct API call. This keeps the total tool count at 9 (vs 84 individual tools) to stay within MCP client tool limits.
 
-**component-types.ts** uses a loop over endpoint definitions instead of repeating the same pattern 10 times — this is the only file that differs from the direct registration pattern.
+**audit.ts** (src/) uses a Proxy on McpServer to intercept `registerTool` and automatically log every tool invocation. The audit tool itself is excluded from logging via `AUDIT_SKIP`.
 
 ## Environment Variables
 

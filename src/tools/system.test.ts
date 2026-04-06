@@ -13,7 +13,7 @@ function createMockClient() {
   } as unknown as BindPlaneClient;
 }
 
-describe('system tools', () => {
+describe('system tool', () => {
   it('registers without error', () => {
     const server = new McpServer({ name: 'test', version: '0.0.1' });
     const client = createMockClient();

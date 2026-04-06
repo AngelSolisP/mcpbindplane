@@ -133,34 +133,21 @@ Una vez configurado, preguntale a tu AI:
 }
 ```
 
-## Tools disponibles (84)
+## Tools disponibles (9 tools, 84 acciones)
 
-### Agents (15)
-`list-agents`, `get-agent`, `get-agent-configuration`, `get-agent-labels`, `update-agent-labels`, `bulk-update-agent-labels`, `update-agent-version`, `bulk-update-agent-version`, `disconnect-agent`, `delete-agents`, `list-agent-types`, `get-agent-type`, `list-agent-versions`, `get-agent-version`, `get-install-command`
+Cada tool agrupa multiples acciones via el parametro `action`. Solo ocupa 9 slots en tu cliente MCP.
 
-### Configurations (17)
-`list-configurations`, `get-configuration`, `copy-configuration`, `revert-configuration`, `delete-configuration`, `list-sources`, `get-source`, `delete-source`, `list-destinations`, `get-destination`, `delete-destination`, `list-processors`, `get-processor`, `delete-processor`, `list-extensions`, `get-extension`, `delete-extension`
-
-### Component Types (10)
-`list-source-types`, `get-source-type`, `list-destination-types`, `get-destination-type`, `list-processor-types`, `get-processor-type`, `list-extension-types`, `get-extension-type`, `list-recommendation-types`, `get-recommendation-type`
-
-### Rollouts (8)
-`list-rollouts`, `create-rollout`, `get-rollout`, `get-rollout-status`, `start-rollout`, `update-rollout`, `pause-rollout`, `resume-rollout`
-
-### Fleets (1)
-`list-fleets`
-
-### Resources (5)
-`apply-resources`, `delete-resources`, `list-resources-by-kind`, `get-resource`, `get-resource-history`
-
-### Admin (22)
-`list-accounts`, `get-account`, `create-account`, `update-account`, `delete-account`, `list-organizations`, `get-organization`, `create-organization`, `delete-organization`, `get-organization-accounts`, `get-organization-projects`, `get-organization-users`, `list-projects`, `get-project`, `create-project`, `delete-project`, `list-users`, `create-user`, `delete-user`, `list-secret-keys`, `create-secret-key`, `delete-secret-key`
-
-### System (4)
-`get-version`, `list-audit-events`, `download-audit-events`, `list-available-components`
-
-### Audit (2)
-`get-action-report`, `clear-action-report`
+| Tool | Acciones | Descripcion |
+|---|---|---|
+| `agents` | 15 | Agentes, tipos de agente, versiones, labels, upgrades, install command |
+| `configurations` | 17 | Configuraciones, sources, destinations, processors, extensions |
+| `component-types` | 10 | Tipos de componentes disponibles (source, destination, processor, extension, recommendation) |
+| `rollouts` | 8 | Despliegues incrementales de configuraciones a agentes |
+| `fleets` | 1 | Fleets (agrupaciones de agentes con config compartida) |
+| `resources` | 5 | Operaciones genericas tipo kubectl (apply, delete, list, get, history) |
+| `admin` | 22 | Cuentas, organizaciones, proyectos, usuarios, API keys |
+| `system` | 4 | Version del servidor, audit events, componentes disponibles |
+| `audit` | 2 | Reporte de acciones realizadas en la sesion actual |
 
 ## Desarrollo
 
