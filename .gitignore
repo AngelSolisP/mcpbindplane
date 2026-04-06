@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.tgz
 .env
+bindplane-docs-complete.md
+docs/superpowers/
