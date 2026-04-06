@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { getAuthHeaders } from './auth.js';
 import { BindPlaneClient } from './client.js';
+import { AuditLogger, createAuditedServer } from './audit.js';
 import { registerSystemTools } from './tools/system.js';
 import { registerAgentTools } from './tools/agents.js';
 import { registerConfigurationTools } from './tools/configurations.js';
@@ -12,6 +13,7 @@ import { registerRolloutTools } from './tools/rollouts.js';
 import { registerFleetTools } from './tools/fleets.js';
 import { registerResourceTools } from './tools/resources.js';
 import { registerAdminTools } from './tools/admin.js';
+import { registerAuditTools } from './tools/audit.js';
 
 const name = 'mcp-bindplane';
 const version = '0.1.0';
@@ -33,7 +35,9 @@ function main() {
     : undefined;
 
   const client = new BindPlaneClient(baseUrl, authHeaders, { timeout });
-  const server = new McpServer({ name, version });
+  const logger = new AuditLogger();
+  const rawServer = new McpServer({ name, version });
+  const server = createAuditedServer(rawServer, logger);
 
   registerSystemTools(server, client);
   registerAgentTools(server, client);
@@ -43,9 +47,10 @@ function main() {
   registerFleetTools(server, client);
   registerResourceTools(server, client);
   registerAdminTools(server, client);
+  registerAuditTools(server, logger);
 
   const transport = new StdioServerTransport();
-  server.connect(transport);
+  rawServer.connect(transport);
 }
 
 main();

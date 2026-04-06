@@ -133,7 +133,7 @@ Una vez configurado, preguntale a tu AI:
 }
 ```
 
-## Tools disponibles (82)
+## Tools disponibles (84)
 
 ### Agents (15)
 `list-agents`, `get-agent`, `get-agent-configuration`, `get-agent-labels`, `update-agent-labels`, `bulk-update-agent-labels`, `update-agent-version`, `bulk-update-agent-version`, `disconnect-agent`, `delete-agents`, `list-agent-types`, `get-agent-type`, `list-agent-versions`, `get-agent-version`, `get-install-command`
@@ -158,6 +158,9 @@ Una vez configurado, preguntale a tu AI:
 
 ### System (4)
 `get-version`, `list-audit-events`, `download-audit-events`, `list-available-components`
+
+### Audit (2)
+`get-action-report`, `clear-action-report`
 
 ## Desarrollo
 

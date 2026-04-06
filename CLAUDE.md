@@ -27,6 +27,7 @@ src/
 │                         #   BINDPLANE_USERNAME+PASSWORD → Basic Auth. API key takes priority.
 ├── client.ts             # BindPlaneClient: HTTP wrapper with get/post/put/patch/delete,
 │                         #   timeout (AbortController), error transformation
+├── audit.ts              # AuditLogger + createAuditedServer: Proxy-based tool call logging
 └── tools/                # One file per API domain, each exports register(server, client)
     ├── agents.ts         # 15 tools: agents + agent-types + agent-versions
     ├── configurations.ts # 17 tools: configs + sources + destinations + processors + extensions
@@ -35,7 +36,8 @@ src/
     ├── fleets.ts         # 1 tool: list-fleets
     ├── resources.ts      # 5 tools: apply-resources (kubectl-like), delete, list-by-kind, get, history
     ├── admin.ts          # 22 tools: accounts, organizations, projects, users, secret-keys
-    └── system.ts         # 4 tools: version, audit-events, available-components
+    ├── system.ts         # 4 tools: version, audit-events, available-components
+    └── audit.ts          # 2 tools: get-action-report, clear-action-report
 ```
 
 **Key pattern:** Every tool module exports a `registerXxxTools(server: McpServer, client: BindPlaneClient)` function. Tools use `server.registerTool(name, { description, inputSchema: z.object({...}) }, handler)`. Handlers call `client.get/post/put/patch/delete` and return `{ content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] }`.
